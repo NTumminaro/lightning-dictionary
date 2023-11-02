@@ -4,5 +4,9 @@ export default {
 	theme: {
 		extend: {}
 	},
-	plugins: [require('daisyui')]
+	daisyui: {
+		logs: false,
+		themes: ['forest']
+	},
+	plugins: [require('@tailwindcss/typography'), require('daisyui')]
 };
