@@ -1,9 +1,38 @@
+// Entity Relationships are defined according to the Data Dictionary as follows:
+
+// There are seven core entities: EMP, ORG, DAY, ORGJOB, PAYCODE, LABORCATEGORY, and ACTIVITY.
+// An entity’s core entity definition can be a combination of one or more of these core entities.
+// An entity is related to another core entity if:
+//* They have the same exact core entity definition. For example, If the core entity of A is EMP|ORG and the core entity of B is also EMP|ORG then A and B are related.
+//* The second core entity is the superset of the first core entity. For example, if the core entity of A is EMP|DAY|ORGJOB and the core entity of B is EMP|ORG|DAY|ORGJOB then A and B are related.
+//* The second core entity is the subset of the first core entity. For example, if the core entity of A is ORGJOB|LABORCATEGORY and the core entity of B is ORGJOB then A and B are related but only if A is selected before B.
+
+// Enum defined from the sections within an Entity in the Data Dictionary
 type Entity = {
 	id: string;
 	name: string;
-	type: EntityType[];
+	type: EntityType[]; // Supported Dataview Type
 	related: string[];
+	coreEntity: CoreEntity[]; // Related Entities
+	relationship: { [key in CoreEntity]?: Relationship } | Relationship; // Relationship
 };
+
+export enum CoreEntity {
+	EMP = 'EMP',
+	ORG = 'ORG',
+	DAY = 'DAY',
+	ORGJOB = 'ORGJOB',
+	PAYCODE = 'PAYCODE',
+	LABORCATEGORY = 'LABORCATEGORY',
+	ACTIVITY = 'ACTIVITY',
+	NONE = 'NONE'
+}
+
+export enum Relationship {
+	OneToOne = 'One to One',
+	OneToMany = 'One to Many',
+	None = 'None'
+}
 
 export enum EntityType {
 	Employee = 'Employee',
@@ -31,91 +60,172 @@ export const entities: Entities = {
 			'Scheduled Paycode Totals',
 			'Sign Offs',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Accrual Balances by Day': {
 		id: 'accrual-balances-by-day',
 		name: 'Accrual Balances by Day',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Accrual Code']
+		related: ['Employee Details', 'Accrual Code'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Accrual Code': {
 		id: 'accrual-code',
 		name: 'Accrual Code',
 		type: [EntityType.Employee],
-		related: ['Accrual Daily Balances', 'Accrual Reporting Period Balances', 'Employee Details']
+		related: ['Accrual Daily Balances', 'Accrual Reporting Period Balances', 'Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Accrual Daily Balances': {
 		id: 'accrual-daily-balances',
 		name: 'Accrual Daily Balances',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Accrual Code']
+		related: ['Employee Details', 'Accrual Code'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
+	},
+	'Accrual Daily Balances No CT': {
+		id: 'accrual-daily-balances-no-ct',
+		name: 'Accrual Daily Balances No CT',
+		type: [EntityType.Employee],
+		related: ['Employee Details', 'Accrual Code'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Accrual Reporting Period Balances': {
 		id: 'accrual-reporting-period-balances',
 		name: 'Accrual Reporting Period Balances',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Accrual Code']
+		related: ['Employee Details', 'Accrual Code'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Accrual Transactions': {
 		id: 'accrual-transactions',
 		name: 'Accrual Transactions',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Accrual Code']
+		related: ['Employee Details', 'Accrual Code'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY, CoreEntity.PAYCODE],
+		relationship: Relationship.OneToMany
 	},
 	Activity: {
 		id: 'activity',
 		name: 'Activity',
 		type: [EntityType.Employee],
-		related: []
+		related: [],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Activity Audit': {
 		id: 'activity-audit',
 		name: 'Activity Audit',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Activity']
+		related: ['Employee Details', 'Activity'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ACTIVITY],
+		relationship: {
+			[CoreEntity.ACTIVITY]: Relationship.OneToOne,
+			[CoreEntity.EMP]: Relationship.OneToMany
+		}
 	},
 	'Activity Efficiency': {
 		id: 'activity-efficiency',
 		name: 'Activity Efficiency',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Activity']
+		related: ['Employee Details', 'Activity'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ACTIVITY],
+		relationship: {
+			[CoreEntity.ACTIVITY]: Relationship.OneToOne,
+			[CoreEntity.EMP]: Relationship.OneToMany
+		}
 	},
 	'Activity Employee': {
 		id: 'activity-employee',
 		name: 'Activity Employee',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Activity']
+		related: ['Employee Details', 'Activity'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.None
 	},
 	'Activity Failed Forms': {
 		id: 'activity-failed-forms',
 		name: 'Activity Failed Forms',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Activity']
+		related: ['Employee Details', 'Activity'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Activity Paycode Totals': {
 		id: 'activity-paycode-totals',
 		name: 'Activity Paycode Totals',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Labor Category', 'Paycode', 'Worked Job', 'Activity']
+		related: ['Employee Details', 'Labor Category', 'Paycode', 'Worked Job', 'Activity'],
+		coreEntity: [
+			CoreEntity.EMP,
+			CoreEntity.PAYCODE,
+			CoreEntity.LABORCATEGORY,
+			CoreEntity.ACTIVITY,
+			CoreEntity.ORGJOB
+		],
+		relationship: {
+			[CoreEntity.ACTIVITY]: Relationship.OneToOne,
+			[CoreEntity.EMP]: Relationship.OneToMany,
+			[CoreEntity.PAYCODE]: Relationship.OneToOne,
+			[CoreEntity.LABORCATEGORY]: Relationship.OneToOne,
+			[CoreEntity.ORGJOB]: Relationship.OneToOne
+		}
 	},
 	'Activity Results Audit': {
 		id: 'activity-results-audit',
 		name: 'Activity Results Audit',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Activity']
+		related: ['Employee Details', 'Activity'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ACTIVITY],
+		relationship: {
+			[CoreEntity.ACTIVITY]: Relationship.OneToOne,
+			[CoreEntity.EMP]: Relationship.OneToMany
+		}
+	},
+	'Activity Segment Efficiency': {
+		id: 'activity-segment-efficiency',
+		name: 'Activity Segment Efficiency',
+		type: [EntityType.Employee],
+		related: ['Employee Details', 'Activity'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ACTIVITY],
+		relationship: {
+			[CoreEntity.EMP]: Relationship.OneToMany,
+			[CoreEntity.ACTIVITY]: Relationship.OneToOne
+		}
+	},
+	'Activity Team': {
+		id: 'activity-team',
+		name: 'Activity Team',
+		type: [EntityType.Employee],
+		related: [],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Activity Transactions': {
 		id: 'activity-transactions',
 		name: 'Activity Transactions',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Activity']
+		related: ['Employee Details', 'Activity'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ACTIVITY],
+		relationship: {
+			[CoreEntity.ACTIVITY]: Relationship.OneToOne,
+			[CoreEntity.EMP]: Relationship.OneToMany
+		}
 	},
 	'Actual & Schedule Shift Times': {
 		id: 'actual-schedule-shift-times',
 		name: 'Actual & Schedule Shift Times',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Actual Paycode Totals Corrections Only': {
 		id: 'actual-paycode-totals-corrections-only',
@@ -133,7 +243,9 @@ export const entities: Entities = {
 			'Pay Period',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Actual Paycode Totals Exclude Corrections': {
 		id: 'actual-paycode-totals-exclude-corrections',
@@ -151,7 +263,9 @@ export const entities: Entities = {
 			'Pay Period',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Actual Paycode Totals Include Corrections': {
 		id: 'actual-paycode-totals-include-corrections',
@@ -169,7 +283,9 @@ export const entities: Entities = {
 			'Pay Period',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Actual Totals Corrections Only': {
 		id: 'actual-totals-corrections-only',
@@ -182,7 +298,9 @@ export const entities: Entities = {
 			'Paycode',
 			'Totalization Status',
 			'Worked Job'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Actual Totals Exclude Corrections': {
 		id: 'actual-totals-exclude-corrections',
@@ -195,7 +313,9 @@ export const entities: Entities = {
 			'Paycode',
 			'Totalization Status',
 			'Worked Job'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Actual Totals Include Corrections': {
 		id: 'actual-totals-include-corrections',
@@ -208,7 +328,9 @@ export const entities: Entities = {
 			'Paycode',
 			'Totalization Status',
 			'Worked Job'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Actual Volume': {
 		id: 'actual-volume',
@@ -223,7 +345,9 @@ export const entities: Entities = {
 			'Budget Volume Detail',
 			'Location',
 			'Plan Volume Detail'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
 	},
 	'Actual Volume - Schedule Zone': {
 		id: 'actual-volume-schedule-zone',
@@ -248,7 +372,9 @@ export const entities: Entities = {
 			'Workload - Budgeted Count',
 			'Workload - Planned Count',
 			'Workload Detail - Planned Count'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Actual Volume - Schedule Zone Set': {
 		id: 'actual-volume-schedule-zone-set',
@@ -264,7 +390,9 @@ export const entities: Entities = {
 			'Plan Volume',
 			'Actual Volume Detail',
 			'Schedule Zone Set Assignment'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Actual Volume - Standard Shift': {
 		id: 'actual-volume-standard-shift',
@@ -288,7 +416,9 @@ export const entities: Entities = {
 			'Schedule Zone Set Assignment',
 			'Workload - Budgeted Count',
 			'Workload - Planned Count'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Actual Volume - Standard Shift Set': {
 		id: 'actual-volume-standard-shift-set',
@@ -303,7 +433,9 @@ export const entities: Entities = {
 			'Location',
 			'Plan Volume',
 			'Plan Volume Detail'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
 	},
 	'Actual Volume Detail': {
 		id: 'actual-volume-detail',
@@ -320,7 +452,9 @@ export const entities: Entities = {
 			'Location',
 			'Plan Volume',
 			'Plan Volume Detail'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Actual Volume Detail - Schedule Zone': {
 		id: 'actual-volume-detail-schedule-zone',
@@ -335,7 +469,9 @@ export const entities: Entities = {
 			'Location',
 			'Plan Volume',
 			'Plan Volume Detail'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Actual Volume Detail - Standard Shift': {
 		id: 'actual-volume-detail-standard-shift',
@@ -350,19 +486,25 @@ export const entities: Entities = {
 			'Location',
 			'Plan Volume',
 			'Plan Volume Detail'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Analytics (Employee)': {
 		id: 'analytics-employee',
 		name: 'Analytics (Employee)',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Sign Off']
+		related: ['Employee Details', 'Sign Off'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Analytics (Business Structure)': {
 		id: 'analytics-business-structure',
 		name: 'Analytics (Business Structure)',
 		type: [EntityType.BusinessStructure],
-		related: ['Location']
+		related: ['Location'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORG, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Approval Summary': {
 		id: 'approval-summary',
@@ -381,13 +523,25 @@ export const entities: Entities = {
 			'Scheduled Paycode Totals',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Approval Transactions': {
 		id: 'approval-transactions',
 		name: 'Approval Transactions',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
+	},
+	'Approvals Reviewers': {
+		id: 'approvals-reviewers',
+		name: 'Approvals Reviewers',
+		type: [EntityType.Employee],
+		related: ['Employee Details'], // ? No Related Entities section in Data Dictionary
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Attendance Actions Summary': {
 		id: 'attendance-actions-summary',
@@ -404,7 +558,9 @@ export const entities: Entities = {
 			'Scheduled Paycode Totals',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Attendance Summary': {
 		id: 'attendance-summary',
@@ -421,85 +577,142 @@ export const entities: Entities = {
 			'Scheduled Paycode Totals',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Attendance Transactions': {
 		id: 'attendance-transactions',
 		name: 'Attendance Transactions',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Attestation Daily Detail': {
 		id: 'attestation-daily-detail',
 		name: 'Attestation Daily Detail',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	Audit: {
 		id: 'audit',
 		name: 'Audit',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Audit Availability': {
 		id: 'audit-availability',
 		name: 'Audit Availability',
 		type: [EntityType.Employee, EntityType.BusinessStructure],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Audit Attendance': {
 		id: 'audit-attendance',
 		name: 'Audit Attendance',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Audit Forecasting': {
 		id: 'audit-forecasting',
 		name: 'Audit Forecasting',
 		type: [EntityType.BusinessStructure],
-		related: ['Location']
+		related: ['Location'],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Audit Leave': {
 		id: 'audit-leave',
 		name: 'Audit Leave',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Audit Schedule': {
 		id: 'audit-schedule',
 		name: 'Audit Schedule',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORGJOB, CoreEntity.PAYCODE, CoreEntity.LABORCATEGORY],
+		relationship: {
+			[CoreEntity.EMP]: Relationship.OneToMany,
+			[CoreEntity.ORGJOB]: Relationship.OneToOne,
+			[CoreEntity.PAYCODE]: Relationship.OneToOne,
+			[CoreEntity.LABORCATEGORY]: Relationship.OneToOne
+		}
 	},
 	'Audit Timekeeping': {
 		id: 'audit-timekeeping',
 		name: 'Audit Timekeeping',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
+	},
+	'Auditor Count (Month)': {
+		id: 'auditor-count-month',
+		name: 'Auditor Count (Month)',
+		type: [EntityType.Employee],
+		related: ['Employee Details', 'Auditor Pattern Strength', 'Auditor Rate (Month)'],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
+	},
+	'Auditor Pattern Strength': {
+		id: 'auditor-pattern-strength',
+		name: 'Auditor Pattern Strength',
+		type: [EntityType.BusinessStructure],
+		related: ['Location', 'Auditor Count (Month)', 'Auditor Rate (Month)'], // ! This is not correct. Data Dictionary missing Related Entities
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
+	},
+	'Auditor Rate (Month)': {
+		id: 'auditor-rate-month',
+		name: 'Auditor Rate (Month)',
+		type: [EntityType.BusinessStructure],
+		related: ['Auditor Count (Month)', 'Auditor Rate (Month)'], // ? Relates to itself
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Availability Pattern Request Detail': {
 		id: 'availability-pattern-request-detail',
 		name: 'Availability Pattern Request Detail',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Availability Request Detail': {
 		id: 'availability-request-detail',
 		name: 'Availability Request Detail',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Availability Status Request History': {
 		id: 'availability-status-request-history',
 		name: 'Availability Status Request History',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Availability Type': {
 		id: 'availability-type',
 		name: 'Availability Type',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Average Worked Hours': {
 		id: 'average-worked-hours',
@@ -519,7 +732,9 @@ export const entities: Entities = {
 			'Scheduled Paycode Totals',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Budget Volume': {
 		id: 'budget-volume',
@@ -536,7 +751,9 @@ export const entities: Entities = {
 			'Location',
 			'Plan Volume',
 			'Plan Volume Detail'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
 	},
 	'Budget Volume - Schedule Zone': {
 		id: 'budget-volume-schedule-zone',
@@ -556,7 +773,9 @@ export const entities: Entities = {
 			'Workload - Budgeted Count',
 			'Workload - Planned Count',
 			'Workload Detail - Planned Count'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Budget Volume - Schedule Zone Set': {
 		id: 'budget-volume-schedule-zone-set',
@@ -572,7 +791,10 @@ export const entities: Entities = {
 			'Location',
 			'Plan Volume',
 			'Plan Volume Detail'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+
+		relationship: Relationship.OneToOne
 	},
 	'Budget Volume - Standard Shift': {
 		id: 'budget-volume-standard-shift',
@@ -592,7 +814,10 @@ export const entities: Entities = {
 			'Workload - Budgeted Count',
 			'Workload - Planned Count',
 			'Workload Detail - Planned Count'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+
+		relationship: Relationship.OneToMany
 	},
 	'Budget Volume - Standard Shift Set': {
 		id: 'budget-volume-standard-shift-set',
@@ -607,7 +832,10 @@ export const entities: Entities = {
 			'Location',
 			'Plan Volume',
 			'Plan Volume Detail'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+
+		relationship: Relationship.OneToOne
 	},
 	'Budget Volume Detail': {
 		id: 'budget-volume-detail',
@@ -624,7 +852,10 @@ export const entities: Entities = {
 			'Location',
 			'Plan Volume',
 			'Plan Volume Detail'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+
+		relationship: Relationship.OneToMany
 	},
 	'Budget Volume Detail - Schedule Zone': {
 		id: 'budget-volume-detail-schedule-zone',
@@ -639,7 +870,10 @@ export const entities: Entities = {
 			'Location',
 			'Plan Volume',
 			'Plan Volume Detail'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+
+		relationship: Relationship.OneToMany
 	},
 	'Budget Volume Detail - Standard Shift': {
 		id: 'budget-volume-detail-standard-shift',
@@ -653,19 +887,29 @@ export const entities: Entities = {
 			'Location',
 			'Plan Volume',
 			'Plan Volume Detail'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+
+		relationship: Relationship.OneToMany
 	},
 	'Cover Request': {
 		id: 'cover-request',
 		name: 'Cover Request',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORGJOB],
+		relationship: {
+			[CoreEntity.EMP]: Relationship.OneToMany,
+			[CoreEntity.ORGJOB]: Relationship.OneToOne
+		}
 	},
 	'Cover Request Status History': {
 		id: 'cover-request-status-history',
 		name: 'Cover Request Status History',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Coverage - Scheduled Count': {
 		id: 'coverage-scheduled-count',
@@ -678,13 +922,25 @@ export const entities: Entities = {
 			'Schedule Zone Set',
 			'Workload - Budgeted Count',
 			'Workload - Planned Count'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
 	},
 	'Coverage Detail - Scheduled Count': {
 		id: 'coverage-detail-scheduled-count',
 		name: 'Coverage Detail - Scheduled Count',
 		type: [EntityType.BusinessStructure],
-		related: ['Coverage - Scheduled Count', 'Location']
+		related: ['Coverage - Scheduled Count', 'Location'],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
+	},
+	Delegation: {
+		id: 'delegation',
+		name: 'Delegation',
+		type: [EntityType.Employee],
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	Employee: {
 		id: EntityType.Employee,
@@ -700,7 +956,9 @@ export const entities: Entities = {
 			'Scheduled Shift',
 			'Scheduled Shift Segment',
 			'Shift Segment Tag'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Employee Details': {
 		id: 'employee-details',
@@ -801,19 +1059,33 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
+	},
+	'Employee Scheduling Indicators': {
+		id: 'employee-scheduling-indicators',
+		name: 'Employee Scheduling Indicators',
+		type: [EntityType.Employee],
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Employee Certification Assignment': {
 		id: 'employee-certification-assignment',
 		name: 'Employee Certification Assignment',
 		type: [EntityType.Employee, EntityType.BusinessStructure, EntityType.EmployeeTimeSeries],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Employee Skill Assignment': {
 		id: 'employee-skill-assignment',
 		name: 'Employee Skill Assignment',
 		type: [EntityType.Employee, EntityType.BusinessStructure, EntityType.EmployeeTimeSeries],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Exception Counter': {
 		id: 'exception-counter',
@@ -829,13 +1101,17 @@ export const entities: Entities = {
 			'Scheduled Paycode Totals',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	Exceptions: {
 		id: 'exceptions',
 		name: 'Exceptions',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Employee HCM - Base Compensation': {
 		id: 'employee-hcm-base-compensation',
@@ -908,7 +1184,9 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Employee HCM - Benefit Plan Summary': {
 		id: 'employee-hcm-benefit-plan-summary',
@@ -981,7 +1259,9 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Employee HCM - Dates': {
 		id: 'employee-hcm-dates',
@@ -1054,7 +1334,9 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Employee HCM - Demographics': {
 		id: 'employee-hcm-demographics',
@@ -1127,7 +1409,9 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Employee HCM - Incidents': {
 		id: 'employee-hcm-incidents',
@@ -1200,7 +1484,9 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Employee HCM - Job Changes History': {
 		id: 'employee-hcm-job-changes-history',
@@ -1273,7 +1559,9 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Employee HCM - Pay Information': {
 		id: 'employee-hcm-pay-information',
@@ -1346,7 +1634,9 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Employee HCM - Performance Review': {
 		id: 'employee-hcm-performance-review',
@@ -1419,7 +1709,9 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Employee HCM - Personal Information': {
 		id: 'employee-hcm-personal-information',
@@ -1492,7 +1784,9 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Employee HCM - Perspective Score': {
 		id: 'employee-hcm-perspective-score',
@@ -1565,7 +1859,9 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Employee HCM - Termination Details': {
 		id: 'employee-hcm-termination-details',
@@ -1638,7 +1934,9 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Employee HCM - Workers Claims': {
 		id: 'employee-hcm-workers-claims',
@@ -1711,31 +2009,41 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Float Details': {
 		id: 'float-details',
 		name: 'Float Details',
 		type: [EntityType.BusinessStructure],
-		related: ['Audit Availability', 'Employee Details', 'Schedule Availability', 'Worked Job']
+		related: ['Audit Availability', 'Employee Details', 'Schedule Availability', 'Worked Job'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY, CoreEntity.ORGJOB],
+		relationship: Relationship.OneToMany
 	},
 	'Group Edit Results': {
 		id: 'group-edit-results',
 		name: 'Group Edit Results',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Hours of Operation': {
 		id: 'hours-of-operation',
 		name: 'Hours of Operation',
 		type: [EntityType.BusinessStructure],
-		related: ['Location']
+		related: ['Location'],
+		coreEntity: [CoreEntity.ORGJOB],
+		relationship: Relationship.OneToMany
 	},
 	'Kiosk Login': {
 		id: 'kiosk-login',
 		name: 'Kiosk Login',
 		type: [EntityType.Employee],
-		related: []
+		related: [],
+		coreEntity: [CoreEntity.NONE],
+		relationship: Relationship.None
 	},
 	'Labor Category': {
 		id: 'labor-category',
@@ -1755,7 +2063,9 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORGJOB],
+		relationship: Relationship.OneToMany
 	},
 	'Leave Case': {
 		id: 'leave-case',
@@ -1779,7 +2089,9 @@ export const entities: Entities = {
 			'Scheduled Paycode Totals',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Leave Case Document': {
 		id: 'leave-case-document',
@@ -1803,7 +2115,9 @@ export const entities: Entities = {
 			'Scheduled Paycode Totals',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Leave Case Note': {
 		id: 'leave-case-note',
@@ -1826,7 +2140,9 @@ export const entities: Entities = {
 			'Scheduled Paycode Totals',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Leave Case Notification': {
 		id: 'leave-case-notification',
@@ -1850,7 +2166,9 @@ export const entities: Entities = {
 			'Scheduled Paycode Totals',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Leave Edit': {
 		id: 'leave-edit',
@@ -1874,7 +2192,9 @@ export const entities: Entities = {
 			'Scheduled Paycode Totals',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Leave Profile': {
 		id: 'leave-profile',
@@ -1946,7 +2266,9 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Leave Taking': {
 		id: 'leave-taking',
@@ -1970,13 +2292,17 @@ export const entities: Entities = {
 			'Scheduled Paycode Totals',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'License Assignment': {
 		id: 'license-assignment',
 		name: 'License Assignment',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Location (Employee)': {
 		id: 'location-employee',
@@ -1989,7 +2315,9 @@ export const entities: Entities = {
 			'Scheduled Paycode Edit',
 			'Scheduled Shift Segment',
 			'Shift Segment Tag'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
 	},
 	'Location (Business Structure)': {
 		id: 'location-business-structure',
@@ -2034,43 +2362,68 @@ export const entities: Entities = {
 			'Shift Segment Tag',
 			'Workload - Budgeted Count',
 			'Workload - Planned Count'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
+	},
+	'Location Scheduling Indicators': {
+		id: 'location-scheduling-indicators',
+		name: 'Location Scheduling Indicators',
+		type: [EntityType.BusinessStructure],
+		related: [],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORGJOB, CoreEntity.LABORCATEGORY],
+		relationship: Relationship.OneToMany
 	},
 	'Mobile App': {
 		id: 'mobile-app',
 		name: 'Mobile App',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	Notices: {
 		id: 'notices',
 		name: 'Notices',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'On Premise': {
 		id: 'on-premise',
 		name: 'On Premise',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Open Shift Request': {
 		id: 'open-shift-request',
 		name: 'Open Shift Request',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORGJOB],
+		relationship: {
+			[CoreEntity.EMP]: Relationship.OneToMany,
+			[CoreEntity.ORGJOB]: Relationship.OneToOne
+		}
 	},
 	'Open Shift Request Status History': {
 		id: 'open-shift-request-status-history',
 		name: 'Open Shift Request Status History',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Overtime Approvers': {
 		id: 'overtime-approvers',
 		name: 'Overtime Approvers',
 		type: [EntityType.Employee, EntityType.BusinessStructure, EntityType.EmployeeTimeSeries],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Pay Period': {
 		id: 'pay-period',
@@ -2143,13 +2496,17 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
 	},
 	'Pay Rule Assignment History': {
 		id: 'pay-rule-assignment-history',
 		name: 'Pay Rule Assignment History',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	Paycode: {
 		id: 'paycode',
@@ -2165,7 +2522,9 @@ export const entities: Entities = {
 			'Projected Totals Include Corrections',
 			'Scheduled Totals',
 			'Timecard Transactions'
-		]
+		],
+		coreEntity: [CoreEntity.PAYCODE],
+		relationship: Relationship.OneToOne
 	},
 	'Paycode Edit': {
 		id: 'paycode-edit',
@@ -2179,7 +2538,9 @@ export const entities: Entities = {
 			'Sign Off',
 			'Totalization Status',
 			'Worked Job'
-		]
+		],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORGJOB, CoreEntity.LABORCATEGORY],
+		relationship: Relationship.OneToMany
 	},
 	'Paycode Edit Comments': {
 		id: 'paycode-edit-comments',
@@ -2193,7 +2554,9 @@ export const entities: Entities = {
 			'Sign Off',
 			'Totalization Status',
 			'Worked Job'
-		]
+		],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORGJOB, CoreEntity.LABORCATEGORY],
+		relationship: Relationship.OneToMany
 	},
 	'Plan Volume': {
 		id: 'plan-volume',
@@ -2210,7 +2573,9 @@ export const entities: Entities = {
 			'Plan Volume Detail',
 			'Plan Volume Detail - Schedule Zone',
 			'Plan Volume Detail - Standard Shift'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
 	},
 	'Plan Volume - Schedule Zone': {
 		id: 'plan-volume-schedule-zone',
@@ -2235,7 +2600,26 @@ export const entities: Entities = {
 			'Workload - Budgeted Count',
 			'Workload - Planned Count',
 			'Workload Detail - Planned Count'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
+	},
+	'Plan Volume - Schedule Zone Set': {
+		id: 'plan-volume-schedule-zone-set',
+		name: 'Plan Volume - Schedule Zone Set',
+		type: [EntityType.BusinessStructure],
+		related: [
+			'Actual Volume',
+			'Actual Volume Detail',
+			'Budget Volume',
+			'Budget Volume Detail',
+			'Location',
+			'Plan Volume',
+			'Actual Volume Detail',
+			'Schedule Zone Set Assignment'
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
 	},
 	'Plan Volume - Standard Shift': {
 		id: 'plan-volume-standard-shift',
@@ -2260,23 +2644,9 @@ export const entities: Entities = {
 			'Workload - Budgeted Count',
 			'Workload - Planned Count',
 			'Workload Detail - Planned Count'
-		]
-	},
-	'Plan Volume - Schedule Zone Set': {
-		id: 'plan-volume-schedule-zone-set',
-		name: 'Plan Volume - Schedule Zone Set',
-		type: [EntityType.BusinessStructure],
-		related: [
-			'Actual Volume',
-			'Actual Volume Detail',
-			'Budget Volume',
-			'Budget Volume Detail',
-			'Location',
-			'Plan Volume',
-			'Plan Volume',
-			'Actual Volume Detail',
-			'Schedule Zone Set Assignment'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Plan Volume - Standard Shift Set': {
 		id: 'plan-volume-standard-shift-set',
@@ -2291,7 +2661,9 @@ export const entities: Entities = {
 			'Plan Volume',
 			'Plan Volume Detail',
 			'Plan Volume Detail - Standard Shift'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
 	},
 	'Plan Volume Detail': {
 		id: 'plan-volume-detail',
@@ -2308,7 +2680,9 @@ export const entities: Entities = {
 			'Plan Volume - Standard Shift Set',
 			'Plan Volume Detail - Schedule Zone',
 			'Plan Volume Detail - Standard Shift'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Plan Volume Detail - Schedule Zone': {
 		id: 'plan-volume-detail-schedule-zone',
@@ -2324,7 +2698,9 @@ export const entities: Entities = {
 			'Plan Volume Detail',
 			'Plan Volume - Schedule Zone Set',
 			'Plan Volume - Standard Shift Set'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Plan Volume Detail - Standard Shift': {
 		id: 'plan-volume-detail-standard-shift',
@@ -2339,19 +2715,25 @@ export const entities: Entities = {
 			'Plan Volume',
 			'Plan Volume Detail',
 			'Plan Volume - Standard Shift Set'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Posted Schedule': {
 		id: 'posted-schedule',
 		name: 'Posted Schedule',
 		type: [EntityType.BusinessStructure],
-		related: ['Location']
+		related: ['Location'],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
 	},
 	'Primary Job Assignment History': {
 		id: 'primary-job-assignment-history',
 		name: 'Primary Job Assignment History',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Projected Paycode Totals - Corrections Only': {
 		id: 'projected-paycode-totals-corrections-only',
@@ -2370,7 +2752,9 @@ export const entities: Entities = {
 			'Projected Paycode Totals Include Corrections',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Projected Paycode Totals - Exclude Corrections': {
 		id: 'projected-paycode-totals-corrections-only',
@@ -2389,7 +2773,9 @@ export const entities: Entities = {
 			'Projected Paycode Totals Include Corrections',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Projected Paycode Totals - Include Corrections': {
 		id: 'projected-paycode-totals-corrections-only',
@@ -2408,7 +2794,9 @@ export const entities: Entities = {
 			'Projected Paycode Totals Exclude Corrections',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Projected Totals - Corrections Only': {
 		id: 'projected-totals-corrections-only',
@@ -2421,7 +2809,15 @@ export const entities: Entities = {
 			'Paycode',
 			'Totalization Status',
 			'Worked Job'
-		]
+		],
+		coreEntity: [
+			CoreEntity.EMP,
+			CoreEntity.DAY,
+			CoreEntity.ORGJOB,
+			CoreEntity.PAYCODE,
+			CoreEntity.LABORCATEGORY
+		],
+		relationship: Relationship.OneToOne
 	},
 	'Projected Totals - Exclude Corrections': {
 		id: 'projected-totals-corrections-only',
@@ -2434,7 +2830,15 @@ export const entities: Entities = {
 			'Paycode',
 			'Totalization Status',
 			'Worked Job'
-		]
+		],
+		coreEntity: [
+			CoreEntity.EMP,
+			CoreEntity.DAY,
+			CoreEntity.ORGJOB,
+			CoreEntity.PAYCODE,
+			CoreEntity.LABORCATEGORY
+		],
+		relationship: Relationship.OneToOne
 	},
 	'Projected Totals - Include Corrections': {
 		id: 'projected-totals-corrections-only',
@@ -2447,79 +2851,111 @@ export const entities: Entities = {
 			'Paycode',
 			'Totalization Status',
 			'Worked Job'
-		]
+		],
+		coreEntity: [
+			CoreEntity.EMP,
+			CoreEntity.DAY,
+			CoreEntity.ORGJOB,
+			CoreEntity.PAYCODE,
+			CoreEntity.LABORCATEGORY
+		],
+		relationship: Relationship.OneToOne
 	},
 	'Reviewer List Assignments': {
 		id: 'reviewer-list-assignments',
 		name: 'Reviewer List Assignments',
 		type: [EntityType.Employee, EntityType.BusinessStructure, EntityType.EmployeeTimeSeries],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Schedule Availability': {
 		id: 'schedule-availability',
 		name: 'Schedule Availability',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Schedule Segment Availability']
+		related: ['Employee Details', 'Schedule Segment Availability'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY],
+		relationship: Relationship.OneToOne
 	},
 	'Schedule Call Log': {
 		id: 'schedule-call-log',
 		name: 'Schedule Call Log',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Day Lock': {
 		id: 'schedule-day-lock',
 		name: 'Schedule Day Lock',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Event Shift (Employee)': {
 		id: 'schedule-event-shift-employee',
 		name: 'Schedule Event Shift (Employee)',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Event Shift (Business Structure)': {
 		id: 'schedule-event-shift-business-structure',
 		name: 'Schedule Event Shift (Business Structure)',
 		type: [EntityType.BusinessStructure],
-		related: [EntityType.Employee]
+		related: ['Employee'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Events (Employee)': {
 		id: 'schedule-events-employee',
 		name: 'Schedule Events (Employee)',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORG, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Events (Business Structure)': {
 		id: 'schedule-events-business-structure',
 		name: 'Schedule Events (Business Structure)',
 		type: [EntityType.BusinessStructure],
-		related: [EntityType.Employee]
+		related: ['Employee'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORG, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Events Pay Code Edit (Employee)': {
 		id: 'schedule-events-pay-code-edit-employee',
 		name: 'Schedule Events Pay Code Edit (Employee)',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORG, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Events Pay Code Edit (Business Structure)': {
 		id: 'schedule-events-pay-code-edit-business-structure',
 		name: 'Schedule Events Pay Code Edit (Business Structure)',
 		type: [EntityType.BusinessStructure],
-		related: [EntityType.Employee]
+		related: ['Employee'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORG, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Group Assignment': {
 		id: 'schedule-group-assignment',
 		name: 'Schedule Group Assignment',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Schedule Group Totals']
+		related: ['Employee Details', 'Schedule Group Totals'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Group Totals': {
 		id: 'schedule-group-totals',
 		name: 'Schedule Group Totals',
 		type: [EntityType.Employee],
-		related: ['Schedule Group Assignment']
+		related: ['Schedule Group Assignment'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Schedule Metrics (Location)': {
 		id: 'schedule-metrics-location',
@@ -2538,7 +2974,9 @@ export const entities: Entities = {
 			'Schedule Zone Set Assignment',
 			'Workload - Budgeted Count',
 			'Workload - Planned Count'
-		]
+		],
+		coreEntity: [CoreEntity.ORGJOB],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Metrics by Day (Location)': {
 		id: 'schedule-metrics-by-day-location',
@@ -2556,7 +2994,9 @@ export const entities: Entities = {
 			'Plan Volume - Standard Shift Set',
 			'Schedule Zone Set',
 			'Schedule Zone Set Assignment'
-		]
+		],
+		coreEntity: [CoreEntity.DAY, CoreEntity.ORGJOB],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Metrics by Span (Job)': {
 		id: 'schedule-metrics-by-span-job',
@@ -2575,31 +3015,57 @@ export const entities: Entities = {
 			'Schedule Metrics (Location)',
 			'Schedule Zone Set',
 			'Schedule Zone Set Assignment'
-		]
+		],
+		coreEntity: [CoreEntity.DAY, CoreEntity.ORGJOB],
+		relationship: Relationship.OneToMany
+	},
+	'Schedule Rule Overrides': {
+		id: 'schedule-rule-overrides',
+		name: 'Schedule Rule Overrides',
+		type: [EntityType.Employee],
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Schedule Rule Violations': {
 		id: 'schedule-rule-violations',
 		name: 'Schedule Rule Violations',
 		type: [EntityType.Employee, EntityType.BusinessStructure],
-		related: ['Audit Availability', 'Employee Details', 'Schedule Availability', 'Worked Job']
+		related: ['Audit Availability', 'Employee Details', 'Schedule Availability', 'Worked Job'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORG, CoreEntity.DAY, CoreEntity.ORGJOB],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Segment Availability': {
 		id: 'schedule-segment-availability',
 		name: 'Schedule Segment Availability',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Schedule Availability']
+		related: ['Employee Details', 'Schedule Availability'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
+	},
+	'Schedule Summary': {
+		id: 'schedule-summary',
+		name: 'Schedule Summary',
+		type: [EntityType.Employee],
+		related: [],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Schedule Tag': {
 		id: 'schedule-tag',
 		name: 'Schedule Tag',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Schedule Tag Segment']
+		related: ['Employee Details', 'Schedule Tag Segment'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Tag Segment': {
 		id: 'schedule-tag-segment',
 		name: 'Schedule Tag Segment',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Schedule Tag']
+		related: ['Employee Details', 'Schedule Tag'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORG, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Zone': {
 		id: 'schedule-zone',
@@ -2612,7 +3078,9 @@ export const entities: Entities = {
 			'Schedule Zone Set Assignment',
 			'Workload - Budgeted Count',
 			'Workload - Planned Count'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Schedule Zone Set': {
 		id: 'schedule-zone-set',
@@ -2625,7 +3093,9 @@ export const entities: Entities = {
 			'Schedule Zone Set Assignment',
 			'Workload - Budgeted Count',
 			'Workload - Planned Count'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
 	},
 	'Schedule Zone Set Assignment': {
 		id: 'schedule-zone-set-assignment',
@@ -2638,13 +3108,17 @@ export const entities: Entities = {
 			'Schedule Zone Set',
 			'Workload - Budgeted Count',
 			'Workload - Planned Count'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
 	},
 	'Scheduled Paycode Edit': {
 		id: 'scheduled-paycode-edit',
 		name: 'Scheduled Paycode Edit',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Pay Period', 'Totalization Status']
+		related: ['Employee Details', 'Pay Period', 'Totalization Status'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORGJOB, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Scheduled Paycode Totals': {
 		id: 'scheduled-paycode-totals',
@@ -2663,25 +3137,33 @@ export const entities: Entities = {
 			'Projected Paycode Totals Include Corrections',
 			'Sign Off',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Scheduled Shift': {
 		id: 'scheduled-shift',
 		name: 'Scheduled Shift',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Scheduled Shift Segment', 'Scheduled Shift Segment S&C Profile']
+		related: ['Employee Details', 'Scheduled Shift Segment', 'Scheduled Shift Segment S&C Profile'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Scheduled Shift Segment': {
 		id: 'scheduled-shift-segment',
 		name: 'Scheduled Shift Segment',
 		type: [EntityType.Employee, EntityType.BusinessStructure],
-		related: ['Employee Details', 'Scheduled Shift', 'Shift Segment Tag']
+		related: ['Employee Details', 'Scheduled Shift', 'Shift Segment Tag'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORG, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Scheduled Shift Segment S&C Profile': {
 		id: 'scheduled-shift-segment-sc-profile',
 		name: 'Scheduled Shift Segment S&C Profile',
 		type: [EntityType.Employee, EntityType.BusinessStructure],
-		related: ['Employee Details', 'Scheduled Shift Segment']
+		related: ['Employee Details', 'Scheduled Shift Segment'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORG],
+		relationship: Relationship.OneToMany
 	},
 	'Scheduled Totals': {
 		id: 'scheduled-totals',
@@ -2694,25 +3176,36 @@ export const entities: Entities = {
 			'Paycode',
 			'Totalization Status',
 			'Worked Job'
-		]
+		],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Self Schedule Request': {
 		id: 'self-schedule-request',
 		name: 'Self Schedule Request',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORGJOB],
+		relationship: {
+			[CoreEntity.EMP]: Relationship.OneToMany,
+			[CoreEntity.ORGJOB]: Relationship.OneToOne
+		}
 	},
 	'Self Schedule Request Status History': {
 		id: 'self-schedule-request-status-history',
 		name: 'Self Schedule Request Status History',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Shift Segment Tag': {
 		id: 'shift-segment-tag',
 		name: 'Shift Segment Tag',
 		type: [EntityType.Employee, EntityType.BusinessStructure],
-		related: ['Employee Details', 'Scheduled Shift Segment']
+		related: ['Employee Details', 'Scheduled Shift Segment'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORG, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Sign Off': {
 		id: 'sign-off',
@@ -2735,43 +3228,66 @@ export const entities: Entities = {
 			'Projected Paycode Totals Exclude Corrections',
 			'Projected Paycode Totals Include Corrections',
 			'Totalization Status'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
-	'Shift Swap Request': {
-		id: 'shift-swap-request',
-		name: 'Shift Swap Request',
+	'Swap Request': {
+		id: 'swap-request',
+		name: 'Swap Request',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORGJOB],
+		relationship: {
+			[CoreEntity.EMP]: Relationship.OneToMany,
+			[CoreEntity.ORGJOB]: Relationship.OneToOne
+		}
 	},
 	'Target Hours': {
 		id: 'target-hours',
 		name: 'Target Hours',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Timecard Changes': {
 		id: 'timecard-changes',
 		name: 'Timecard Changes',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY, CoreEntity.PAYCODE],
+		relationship: Relationship.OneToMany
 	},
 	'Timecard Transactions': {
 		id: 'timecard-transactions',
 		name: 'Timecard Transactions',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Labor Category', 'Paycode', 'Worked Job']
+		related: ['Employee Details', 'Labor Category', 'Paycode', 'Worked Job'],
+		coreEntity: [
+			CoreEntity.EMP,
+			CoreEntity.DAY,
+			CoreEntity.PAYCODE,
+			CoreEntity.ORGJOB,
+			CoreEntity.LABORCATEGORY
+		],
+		relationship: Relationship.OneToMany
 	},
 	'Time-Off Request': {
 		id: 'time-off-request',
 		name: 'Time-Off Request',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Paycode']
+		related: ['Employee Details', 'Paycode'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY, CoreEntity.PAYCODE],
+		relationship: Relationship.OneToMany
 	},
 	'Time-Off Request Status History': {
 		id: 'time-off-request-status-history',
 		name: 'Time-Off Request Status History',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.DAY],
+		relationship: Relationship.OneToMany
 	},
 	'Totalization Status': {
 		id: 'totalization-status',
@@ -2844,13 +3360,25 @@ export const entities: Entities = {
 			'Worked Span',
 			'Worked Span In Punch',
 			'Worked Span Out Punch'
-		]
+		],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToOne
 	},
 	'Traffic Pattern': {
 		id: 'traffic-pattern',
 		name: 'Traffic Pattern',
 		type: [EntityType.BusinessStructure],
-		related: []
+		related: [],
+		coreEntity: [CoreEntity.DAY, CoreEntity.ORGJOB],
+		relationship: Relationship.OneToMany
+	},
+	'Volume Details': {
+		id: 'volume-details',
+		name: 'Volume Details',
+		type: [EntityType.BusinessStructure],
+		related: [],
+		coreEntity: [CoreEntity.DAY, CoreEntity.ORGJOB],
+		relationship: Relationship.OneToMany
 	},
 	'Worked Job': {
 		id: 'worked-job',
@@ -2867,19 +3395,25 @@ export const entities: Entities = {
 			'Projected Totals Include Corrections',
 			'Scheduled Totals',
 			'Timecard Transactions'
-		]
+		],
+		coreEntity: [CoreEntity.ORGJOB],
+		relationship: Relationship.OneToOne
 	},
 	'Worked Shift': {
 		id: 'worked-shift',
 		name: 'Worked Shift',
 		type: [EntityType.Employee],
-		related: ['Employee Details']
+		related: ['Employee Details'],
+		coreEntity: [CoreEntity.EMP],
+		relationship: Relationship.OneToMany
 	},
 	'Worked Span': {
 		id: 'worked-span',
 		name: 'Worked Span',
 		type: [EntityType.Employee],
-		related: ['Employee Details', 'Totalization Status']
+		related: ['Employee Details', 'Totalization Status'],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORGJOB, CoreEntity.LABORCATEGORY],
+		relationship: Relationship.OneToMany
 	},
 	'Worked Span In Punch': {
 		id: 'worked-span-in-punch',
@@ -2903,7 +3437,9 @@ export const entities: Entities = {
 			'Sign Off',
 			'Totalization Status',
 			'Worked Job'
-		]
+		],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORGJOB, CoreEntity.LABORCATEGORY],
+		relationship: Relationship.OneToMany
 	},
 	'Worked Span Out Punch': {
 		id: 'worked-span-out-punch',
@@ -2927,7 +3463,9 @@ export const entities: Entities = {
 			'Sign Off',
 			'Totalization Status',
 			'Worked Job'
-		]
+		],
+		coreEntity: [CoreEntity.EMP, CoreEntity.ORGJOB, CoreEntity.LABORCATEGORY],
+		relationship: Relationship.OneToMany
 	},
 	'Workload - Budgeted Count': {
 		id: 'workload-budgeted-count',
@@ -2940,7 +3478,9 @@ export const entities: Entities = {
 			'Schedule Zone Set',
 			'Schedule Zone Set Assignment',
 			'Workload - Planned Count'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
 	},
 	'Workload - Planned Count': {
 		id: 'workload-planned-count',
@@ -2953,6 +3493,8 @@ export const entities: Entities = {
 			'Schedule Zone Set',
 			'Schedule Zone Set Assignment',
 			'Workload - Budgeted Count'
-		]
+		],
+		coreEntity: [CoreEntity.ORG],
+		relationship: Relationship.OneToOne
 	}
 };
