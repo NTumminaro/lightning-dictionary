@@ -39,7 +39,6 @@
         <p>© 2023 Lightning Dictionary</p>
         <p>A Pro WFM Tool</p>
       </div>
-  
       <!-- Right side -->
       <div class="text-right">
         <p class="flex items-center justify-center md:justify-end">
