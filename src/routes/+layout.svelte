@@ -36,20 +36,29 @@
     <slot />
   </main>
   
-  <footer class="footer items-center p-4 bg-neutral text-neutral-content">
-    <aside class="items-center">
-      <p class="mt-0">Copyright © 2023 - All right reserved</p>
-      <p class="mt-2 font-bold">Lightning Dictionary<br>
-      <span class="italic font-normal">A Pro WFM Data Dictionary Visualizer Tool</span></p>
-    </aside>
-    <nav class="md:place-self-center md:justify-self-end">
-      <header class="footer-title opacity-[65%]">Made with <IconHeart class="inline w-auto h-auto text-red-500 align-top"/></header>
-      <a href="https://kit.svelte.dev" target="_blank" class="link link-hover">SvelteKit</a>
-      <a href="https://tailwindcss.com" target="_blank" class="link link-hover">TailwindCSS</a>
-      <a href="https://daisyui.com" target="_blank" class="link link-hover">DaisyUI</a>
-      <a href="https://fontsource.org" target="_blank" class="link link-hover">FontSource</a>
-    </nav>
-  </footer>
+  <div class="relative">
+    <footer class="footer p-4 bg-neutral text-neutral-content fixed inset-x-0 bottom-0">
+      <div class="flex flex-col md:flex-row justify-between items-center w-full">
+        <!-- Left side -->
+        <div class="text-center md:text-left mb-4 md:mb-0">
+          <p>© 2023 Lightning Dictionary</p>
+          <p>A Pro WFM Tool</p>
+        </div>
+        <!-- Right side -->
+        <div class="text-right">
+          <p class="flex items-center justify-center md:justify-end">
+            Made with <IconHeart class="inline-block w-4 h-4 text-red-500 ml-1" />
+          </p>
+          <div class="flex gap-1 justify-center md:justify-end">
+            <a href="https://kit.svelte.dev" target="_blank" class="link link-hover text-xs">SvelteKit</a>
+            <a href="https://tailwindcss.com" target="_blank" class="link link-hover text-xs">TailwindCSS</a>
+            <a href="https://daisyui.com" target="_blank" class="link link-hover text-xs">DaisyUI</a>
+            <a href="https://fontsource.org" target="_blank" class="link link-hover text-xs">FontSource</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
   
 </div>
 
